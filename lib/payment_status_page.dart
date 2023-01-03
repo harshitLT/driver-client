@@ -40,7 +40,24 @@ class _PaymentStatusPageState extends State<PaymentStatusPage> {
         (data) => setState(() {
               paymentRequests.add(data);
             }));
-    socket.onDisconnect((_) => print('disconnect'));
+    socket.onDisconnect((_) async {
+      try {
+        Response response = await post(
+            Uri.parse(
+              'http://localhost:3000/v1/auth/logout',
+            ),
+            headers: {'authorization': 'Bearer ${widget.authToken}'});
+        if (response.statusCode != 200) {
+          final Map<String, dynamic> body1 = jsonDecode(response.body);
+          Fluttertoast.showToast(msg: body1['message']);
+          throw 'Something went wrong please try again';
+        }
+        Navigator.of(context).pop();
+        Fluttertoast.showToast(msg: 'Socket disconnected');
+      } on Exception catch (e) {
+        Fluttertoast.showToast(msg: e.toString());
+      }
+    });
   }
 
   @override
@@ -68,7 +85,7 @@ class _PaymentStatusPageState extends State<PaymentStatusPage> {
                 ),
                 headers: {'authorization': 'Bearer ${widget.authToken}'});
             if (response.statusCode != 200) {
-            final Map<String, dynamic> body1 = jsonDecode(response.body);
+              final Map<String, dynamic> body1 = jsonDecode(response.body);
               Fluttertoast.showToast(msg: body1['message']);
               throw 'Something went wrong please try again';
             }
